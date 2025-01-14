@@ -1,0 +1,276 @@
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <string>
+#include <sstream>
+#include <algorithm> // For transform and tolower
+
+using namespace std;
+
+// User Management Class
+class UserManager {
+private:
+    map<string, string> credentials;
+
+    void loadCredentials() {
+        ifstream file("credentials.txt");
+        if (file.is_open()) {
+            string username, password;
+            while (file >> username >> password) {
+                credentials[username] = password;
+            }
+            file.close();
+        }
+    }
+
+    void saveCredentials() {
+        ofstream file("credentials.txt");
+        if (file.is_open()) {
+            for (auto& cred : credentials) {
+                file << cred.first << " " << cred.second << endl;
+            }
+            file.close();
+        }
+    }
+
+public:
+    UserManager() {
+        loadCredentials();
+    }
+
+    void registerUser() {
+        string username, password;
+        cout << "Enter new username: ";
+        cin >> username;
+        cout << "Enter new password: ";
+        cin >> password;
+        credentials[username] = password;
+        saveCredentials();
+        cout << "Registration successful!" << endl;
+    }
+
+    bool loginUser() {
+        string username, password;
+        cout << "Enter username: ";
+        cin >> username;
+        cout << "Enter password: ";
+        cin >> password;
+        if (credentials.find(username) != credentials.end() && credentials[username] == password) {
+            cout << "Login successful!" << endl;
+            return true;
+        }
+        cout << "Invalid credentials!" << endl;
+        return false;
+    }
+};
+
+// Word Management Class
+class WordManager {
+private:
+    string filename = "C:\\Users\\UMAR SALEEM\\source\\repos\\Dictionary\\file.txt";
+
+    // Helper function to convert a string to lowercase
+    string toLowerCase(const string& str) {
+        string lowerStr = str;
+        transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+        return lowerStr;
+    }
+
+public:
+    WordManager(string file) : filename(file) {}
+
+    void addWord() {
+        string word, meaning, synonyms, phonetic, origin, partOfSpeech;
+        cout << "Enter word: ";
+        cin.ignore();
+        getline(cin, word);
+        cout << "Enter meaning: ";
+        getline(cin, meaning);
+        cout << "Enter synonyms: ";
+        getline(cin, synonyms);
+        cout << "Enter phonetic: ";
+        getline(cin, phonetic);
+        cout << "Enter origin: ";
+        getline(cin, origin);
+        cout << "Enter part of speech: ";
+        getline(cin, partOfSpeech);
+
+        ofstream file(filename, ios::app);
+        if (file.is_open()) {
+            file << word << "," << meaning << "," << synonyms << "," << phonetic << "," << origin << "," << partOfSpeech << endl;
+            file.close();
+            cout << "Word added successfully!" << endl;
+        }
+        else {
+            cout << "Error opening file!" << endl;
+        }
+    }
+
+    void deleteWord() {
+        string word;
+        cout << "Enter word to delete: ";
+        cin.ignore();
+        getline(cin, word);
+        ifstream file(filename);
+        ofstream temp("temp.txt");
+        string line;
+        bool found = false;
+        if (file.is_open() && temp.is_open()) {
+            while (getline(file, line)) {
+                if (line.substr(0, line.find(',')) != word) {
+                    temp << line << endl;
+                }
+                else {
+                    found = true;
+                }
+            }
+            file.close();
+            temp.close();
+            remove(filename.c_str());
+            rename("temp.txt", filename.c_str());
+            if (found) {
+                cout << "Word deleted successfully!" << endl;
+            }
+            else {
+                cout << "Word not found!" << endl;
+            }
+        }
+        else {
+            cout << "Error opening file!" << endl;
+        }
+    }
+
+    void displayData() {
+        ifstream file(filename);
+        string line;
+        if (file.is_open()) {
+            while (getline(file, line)) {
+                // Split the line into fields
+                istringstream stream(line);
+                string word, meaning, synonyms, phonetic, origin, partOfSpeech;
+
+                getline(stream, word, ',');
+                getline(stream, meaning, ',');
+                getline(stream, synonyms, ',');
+                getline(stream, phonetic, ',');
+                getline(stream, origin, ',');
+                getline(stream, partOfSpeech, ',');
+
+                // Display the information in a formatted way
+                cout << "Word: " << word << endl;
+                cout << "Meaning: " << meaning << endl;
+                cout << "Synonyms: " << synonyms << endl;
+                cout << "Phonetic: " << phonetic << endl;
+                cout << "Origin: " << origin << endl;
+                cout << "Part of Speech: " << partOfSpeech << endl;
+                cout << "---------------------------------" << endl;
+            }
+            file.close();
+        }
+        else {
+            cout << "Error opening file!" << endl;
+        }
+    }
+
+    // Function to search for a word regardless of case sensitivity
+    void searchWord() {
+        string word;
+        cout << "Enter word to search: ";
+        cin.ignore();  // Ignore any leftover newline character
+        getline(cin, word);
+
+        ifstream file(filename);
+        string line;
+        bool found = false;
+        if (file.is_open()) {
+            while (getline(file, line)) {
+                string currentWord = line.substr(0, line.find(','));
+                if (toLowerCase(currentWord) == toLowerCase(word)) {
+                    found = true;
+                    // Split and display the word's details
+                    istringstream stream(line);
+                    string meaning, synonyms, phonetic, origin, partOfSpeech;
+                    getline(stream, currentWord, ',');
+                    getline(stream, meaning, ',');
+                    getline(stream, synonyms, ',');
+                    getline(stream, phonetic, ',');
+                    getline(stream, origin, ',');
+                    getline(stream, partOfSpeech, ',');
+
+                    // Display the word details
+                    cout << "Word: " << currentWord << endl;
+                    cout << "Meaning: " << meaning << endl;
+                    cout << "Synonyms: " << synonyms << endl;
+                    cout << "Phonetic: " << phonetic << endl;
+                    cout << "Origin: " << origin << endl;
+                    cout << "Part of Speech: " << partOfSpeech << endl;
+                    cout << "---------------------------------" << endl;
+                }
+            }
+            file.close();
+            if (!found) {
+                cout << "Word not found!" << endl;
+            }
+        }
+        else {
+            cout << "Error opening file!" << endl;
+        }
+    }
+};
+
+int main() {
+    UserManager userManager;
+    WordManager wordManager("C:\\Users\\UMAR SALEEM\\source\\repos\\Dictionary\\file.txt");
+
+    int choice;
+    do {
+        cout << "1. Register\n2. Login\n3. Add Word\n4. Delete Word\n5. Display Data\n6. Search Word\n7. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            userManager.registerUser();
+            break;
+        case 2:
+            if (userManager.loginUser()) {
+                int adminChoice;
+                do {
+                    cout << "1. Add Word\n2. Delete Word\n3. Display Data\n4. Search Word\n5. Logout\n";
+                    cout << "Enter your choice: ";
+                    cin >> adminChoice;
+
+                    switch (adminChoice) {
+                    case 1:
+                        wordManager.addWord();
+                        break;
+                    case 2:
+                        wordManager.deleteWord();
+                        break;
+                    case 3:
+                        wordManager.displayData();
+                        break;
+                    case 4:
+                        wordManager.searchWord();  // Add this case to search for words
+                        break;
+                    }
+                } while (adminChoice != 5);
+            }
+            break;
+        case 3:
+            wordManager.addWord();
+            break;
+        case 4:
+            wordManager.deleteWord();
+            break;
+        case 5:
+            wordManager.displayData();
+            break;
+        case 6:
+            wordManager.searchWord();
+            break;
+        }
+    } while (choice != 7);
+
+    return 0;
+}
